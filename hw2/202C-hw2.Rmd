@@ -1,0 +1,197 @@
+---
+title: "202C-hw2"
+author: "Jiahao Tian"
+date: "2022-10-21"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 1
+
+
+**Solution:**
+
+
+$$ a)~~~ x = \sqrt{z},~~~{dx \over dx}  = \pm {1 \over {2 \sqrt {z}}}$$
+$$b) ~~~ x = log(z), ~~~{{dx} \over {dz}}  = {1 \over z}$$ 
+
+$$c)~~~ x = {1 \over z}, ~~~  {{dx} \over {dz}}  = -{1 \over {z}^2}$$
+
+$$d)~~~ x = {e^z \over {1+e^z}},~~~{dx \over dz} = {e^z \over {(1+e^z)^2}}$$
+
+
+## Question 2
+
+
+**Solution:**
+
+
+$$x \sim Gamma(a,b) $$
+$$f(x) = {{\beta^\alpha \over \Gamma(\alpha)} x^{\alpha - 1}e^{-x\beta},~~~x= {1 \over z}} $$
+$$Jacobian:~~\bigg|{dx \over {dz}} \bigg| = \bigg |{-{1 \over {z}^2 }}\bigg| = z^{-2} $$
+$$ \begin{aligned}
+f(z) & = {{b^a} \over \Gamma(a)}z^{-a-1}e^{-{b \over z}} \sim Inver.gam(a,b), ~~z>0
+\end{aligned}$$
+
+## Question 3
+
+**Solution:**
+
+**a)**
+
+$$ \begin{aligned}
+FIP & = {{-{d^2 \over d \lambda^2}logp(\lambda)} \over {-{d^2 \over d \lambda^2}}(logp(y|\lambda)+logp(\lambda))}  \\
+& = \bigg [{{a-1}\over a-1 + \sum yi} \bigg ]
+\end{aligned}$$
+
+**b)**
+
+by weight average
+
+$$\begin{aligned}
+E(y| \lambda) & = {{a+\sum yi} \over b+n} \\
+& = {b \over b+n}{a \over b}+{n \over b+n} \overline{y}
+\end{aligned}$$
+
+**c)**
+
+From hw 1 we got:
+
+$$ \begin{aligned}
+f(y|a,b) & = {b^a \over \Gamma(a)y!}{{\Gamma(y+a)} \over (b+1)^{y+a}} \\
+& = {(y+a-1)! \over (a-1)!y!}{b^a \over (b+1)^{y+a}}\\
+& = {y+a-1 \choose y}b^a(b+1)^{-y-a} \\
+& = {y+a-1 \choose y}{\bigg ({b \over {1+b}}\bigg )}^a {\bigg ({1 \over {1+b}}\bigg )}^y
+\end{aligned}$$
+
+$$ Which ~~ f(y|a,b) \sim NB(a,{b \over {1+b}})$$ 
+$$ \begin{aligned}
+prior~data~ mean &= {a \over b}\\
+prior~sample~size & = b ~(from~ weight~ average)
+\end{aligned}$$
+
+
+## Question 4
+
+
+**Solution:**
+
+$$y=e^{-zi}I_{0<zi<1}, ~~~\bigg|{dy \over dz}\bigg| = \bigg|{-e^{-zi}} \bigg| = e^{-zi}I_{0<zi<1}$$
+$$\begin{aligned}
+f(zi|\theta) & \propto \theta exp(-zi(\theta - 1))e^{-zi}I_{0<zi<1} \\
+& = \theta exp(-zi\theta) I_{0<zi<1}\\
+& = {\theta \over \Gamma(1)}{zi^{1-1}}{e^{-zi(\theta)}}I_{0<zi<1} \\
+& = \theta e^{-zi(\theta)} \sim Gamma(1, \theta), 0<zi<1
+\end{aligned}$$
+
+Also because alpha = 1,
+
+$$\theta e^{-zi(\theta)} \sim exp(\theta), 0<zi<1$$
+
+
+## Question 5
+
+**Solution:**
+
+**a)**
+
+$$ Lf(y|\theta) = \theta^n e^{{\theta - 1}log(\sum yi)}I_{0<yi<1}$$
+$$f(\theta | z) \propto \theta^{a-1}e^{-\theta b}$$
+$$f(\theta | y) \propto \theta^{a+n-1}e^{- \theta(b-\sum log(yi)} \sim gamma(a+n, b- \sum log( yi)) $$
+
+ **From posterior distribution:**
+$$\begin{aligned}
+mean &= {{a+n} \over b-\sum log( yi) } \\
+variance &= {{a+n} \over (b- \sum log( yi))^2 }\\
+mode &= {{a+n-1} \over b-\sum log( yi) }
+\end{aligned}$$
+
+**b)**
+
+$$\begin{aligned}
+FIP & = {{-{d^2 \over d \theta^2}logp(\theta)} \over {-{d^2 \over d \theta^2}}(logp(y|\theta)+logp(\theta))}  \\
+evaluated~at~ mode & = {{a-1}\over a+n-1} 
+\end{aligned}$$
+
+**c)**
+
+$$ \begin{aligned}
+FIP & = \bigg [{{-{d^2 \over d \theta^2}logp(\theta)} \over {-{d^2 \over d \theta^2}}(logp(y|\theta)+logp(\theta))} \bigg ], is~better \\
+\end{aligned}$$
+
+Easier to compute by using this formula
+
+**d)**
+
+From wikipedia, Pareto distribution and Zeta distribution.
+
+## Question 6
+
+**a)**
+
+from hw 1 Q2
+
+$$ p(\lambda | y) \propto \lambda^{\sum(yi)+a-1} e^{-\lambda(b+n)}, \lambda >0 $$
+
+$$ posterior~ follows~ gamma~ distribution~ \sim Gamma(\sum(yi)+a, b+n) $$
+
+first normal approximation, by using mean and variance from posterior distribution.
+
+$$ mean = {\sum(yi)+a \over b+n}, ~~ variance={\sum(yi)+a \over (b+n)^2}$$
+$$we~have~f(y| \lambda ) \sim N({\sum(yi)+a \over b+n},{\sum(yi)+a \over (b+n)^2})$$
+
+second normal approximation, by using fisher information and mode of lambda.
+
+
+$$\begin{aligned}
+mode~of~\lambda &= {\sum(yi)+a -1 \over b+n} \\
+I & = {(b+n)^2 \over \sum(yi)+a-1} \\
+we~have~ &= f(y| \lambda ) \sim N({\sum(yi)+a-1 \over b+n},{\sum(yi)+a-1 \over (b+n)^2})
+\end{aligned}$$
+
+
+**b)**
+
+**i**: when the parameter from posterior distribution is large then we can say the normal approximation(s) to the gamma
+posterior are good.
+
+**ii**: when the parameter from posterior distribution is close to 0 then we can say the normal approximation(s) to the gamma posterior are not good.
+
+
+**c)**
+
+Example when postrior are good, I chose sum of yi = 10, alpha = 40, beta = 10
+
+```{r}
+x <- seq(0, 10, by = 0.05)
+
+gam1 <- dgamma(x, shape=50, rate = 10)
+nor1 <- dnorm(x,mean = 49/10, 49/10^2)
+nor12 <- dnorm(x,mean = 50/10, 50/10^2)
+
+plot(x, gam1, type = "l", col = "red") 
+lines(x, nor1, type = "l", col = "green") 
+lines(x, nor12, type = "l", col = "blue") 
+```
+
+Example when posterior are not good, I chose sum of yi = 10, alpha = 2, beta = 1
+
+```{r}
+x <- seq(0, 10, by = 0.05)
+
+gam1 <- dgamma(x, shape=2, rate = 1)
+nor1 <- dnorm(x,mean = 1/1, 1/1^2)
+nor12 <- dnorm(x,mean = 2/1, 2/1^2)
+
+plot(x, gam1, type = "l", col = "red") 
+lines(x, nor1, type = "l", col = "green") 
+lines(x, nor12, type = "l", col = "blue") 
+```
+
+
+**d)**
+
+When alpha is large we get good normal approximation, when alpha is small we get poor normal approximation.

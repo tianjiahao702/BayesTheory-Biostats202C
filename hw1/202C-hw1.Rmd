@@ -1,0 +1,205 @@
+---
+title: "Biostats-202C-hw1"
+author: "Jiahao Tian"
+date: "2022-10-06"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyr)
+library(ggplot2)
+```
+
+**Question 1**
+
+
+**a)**
+
+$$ y \sim pois(\lambda), ~~~\lambda \sim gamma(a, b) $$
+$$ f(y|\lambda) = {(\lambda^y e^{-\lambda})\over y!} ~~~ L(y|\lambda) = {{\lambda^{\sum(yi)} e^{-ny}} \over \Pi y!} $$
+$$ p(\lambda) = {b^a \over \Gamma(a)} \lambda^{a-1} e^{-\lambda{b}} $$
+$$ p(\lambda | y) \propto \lambda^{y+a-1} e^{-\lambda(b+1)}, \lambda >0 $$
+$$ posterior~ follows~ gamma~ distribution~ \sim Gamma(y+a, b+1) $$
+
+**b)**
+
+$$\begin{aligned}
+f(y) & = \int_{0}^{\infty}{b^a \over \Gamma(a)}{\lambda^{a-1}}{e^{-\lambda b}}{{\lambda^ye^{-\lambda}}\over y!}d\lambda \\
+& = {b^a \over {\Gamma(a)y!}}\int_{0}^{\infty}{\lambda^{a-1}}{{e^{-\lambda b}}}{\lambda^{y}}{e^{-\lambda}}d\lambda\\
+& = {b^a \over {\Gamma(a)y!}}{\Gamma(y+a) \over (b+a)^{y+a}} \int_{0}^{\infty}{(b+a)^{y+a} \over \Gamma(y+a)}{\lambda^{y+a-1}}{e^{-\lambda(b+1)}}d\lambda \\
+& = {b^a \over {\Gamma(a)y!}}{\Gamma(y+a) \over (b+1)^{y+a}}
+\end{aligned}$$
+
+
+**c)**
+
+From part b,
+
+$$ \begin{aligned}
+f(y|a,b) & = {b^a \over \Gamma(a)y!}{{\Gamma(y+a)} \over (b+1)^{y+a}} \\
+& = {(y+a-1)! \over (a-1)!y!}{b^a \over (b+1)^{y+a}}\\
+& = {y+a-1 \choose y}b^a(b+1)^{-y-a} \\
+& = {y+a-1 \choose y}{\bigg ({b \over {1+b}}\bigg )}^a {\bigg ({1 \over {1+b}}\bigg )}^y
+\end{aligned}$$
+
+$$ Which ~~ f(y|a,b) \sim NB(a,{b \over {1+b}})$$ 
+
+**d)**
+
+
+```{r}
+x <- seq(from = 0, to = 5, by = 1)
+prior <- dgamma(x, 1, 1)
+posterior <- dnbinom(x, 1, 1/2)
+prior2 <- dgamma(x, 8, 2)
+posterior2 <- dnbinom(x, 8, 2/3)
+
+plot(x, prior, type = "l", col = "red") 
+lines(x, posterior, type = "l", col = "green") 
+lines(x, prior2, type = "l", col = "blue") 
+lines(x, posterior2, type = "l", col = "purple")
+```
+
+
+
+**Question 2**
+
+
+**a)**
+
+
+$$L(y|\lambda) = {{\lambda^{\sum(yi)} e^{-ny}} \over \Pi y!} ~~~ p(\lambda) = {b^a \over \Gamma(a)} \lambda^{a-1} e^{-\lambda{b}} $$
+$$ p(\lambda | y) \propto \lambda^{\sum(yi)+a-1} e^{-\lambda(b+n)}, \lambda >0 $$
+
+$$ posterior~ follows~ gamma~ distribution~ \sim Gamma(\sum(yi)+a, b+n) $$
+
+**Question 3**
+
+
+**a)**
+
+$$ \begin{aligned}
+mean; ~~ E(y|\tau) & = \int_{0}^{\infty}y{({2 \over {\pi\tau}})^{1/2}}e^{-(y)^2 \over 2\tau}dy \\
+& = ({2 \over \pi\tau})^{1/2}[-\tau e^{-{{y}^2}\over2\tau}|_{0}^{\infty}] \\
+& = ({2\tau \over \pi})^{1/2}
+\end{aligned}$$
+$$ variance; ~~ \tau(1-{2 \over \pi})~~~~~~mode; ~~ 0~~~~~median; ~~ \sqrt{2\tau}{erf}^{-1}(1/2)$$
+**b)**
+
+
+$$ indicator,~~~~I = \{^{1~~~~0~<~yi}_{0~~~~otherwise}$$
+$$\begin{aligned} Lf(y|\tau) & = {({2 \over {\pi\tau}})^{n/2}}e^{-{(\sum yi)^2 \over 2\tau}}I \\
+logLf(y|\tau) & = {n \over 2}log{2 \over {\pi\tau}}-{{\sum yi}^2 \over {2\tau}}I \\
+\triangledown logLf(y|\tau) & = -{n\over {2\tau^3}}+{{\sum yi^2}\over{2\tau^2}}~,set~equal~to~0\\
+we~get~,\hat{\tau} & = {n \over {{\sum yi}}^2}, ~~~mle\\
+\end{aligned}$$
+
+$$\begin{aligned}
+Lf(y|\tau) & = {({2 \over {\pi\tau}})^{n/2}}e^{-{(\sum yi)^2 \over 2\tau}}I \\
+T & = {{{\sum yi}}^2}~,is ~ the~ sufficient~ statistics ~for ~\tau
+\end{aligned}$$
+
+
+
+
+**c)**
+
+
+$$ indicator,~~~~I = \{^{1~~~~0~<~yi}_{0~~~~otherwise}$$
+
+
+$$Lf(y|\tau) = {({2 \over {\pi\tau}})^{n/2}}e^{-{(\sum yi)^2 \over 2\tau}}I $$
+$$f(\tau) = {{({b \over 2})^{a \over 2}} \over {\Gamma({a \over 2})}}\tau^{-{a \over 2}-1}e^{-{b \over {2\tau}}}  $$
+$$ posterior;~~ f(\tau|y) \propto {\tau}^{-n/2-a/2-1} e^{-{{({\sum yi}^2}+b}) \over 2\tau},~yi>0$$
+$$posterior ~follows \sim inver.\Gamma({n \over 2}+ \frac{a}{2}, {({{{\sum yi}^2}+b}) \over 2})$$
+
+
+
+**Question 4**
+
+
+**a)**
+
+When data is non-negative, also collected at the individual level (binary response) or group level (proportion) might use
+half-normal distribution. When data shows binary response and non-negative values will lead to use half-normal distribution.
+And my answer is NO for Alaska temperature question.
+
+
+**b)**
+
+Example: Half-normal can be use to model distance at which wildlife observe on a boat detect an animal when surveying, such 
+as whales in the ocean.
+
+**c)**
+
+The competitor distribution I might use is "Poisson distribution".
+
+
+
+**Question 5**
+
+
+**a)**
+
+$$ f(y|\sigma) = {({2 \over {\pi\sigma^2}})^{1/2}}e^{-{(y)^2 \over 2\sigma^2}},~y>0  $$
+
+**b)**
+
+No, because because the prior distribution is not conjugate prior. It is about $\sigma$ not about $\sigma^2$
+
+
+**c)**
+
+Yes, I thinks that it can be inverse gamma.
+
+
+
+**Question 6**
+
+
+**a)**
+
+$$ f(y|\theta) \sim beta(\theta,1) $$
+$$ so~the~normalizing~constant~is;~ {{\Gamma(\theta +1)} \over \Gamma(\theta) \Gamma(1)}=\theta$$
+
+
+**b)**
+
+
+
+$$ Lf(y|\theta) = \bigg({{\Gamma(\theta +1)} \over \Gamma(\theta) \Gamma(1)}\bigg)^n\Pi_{i=1}^n {yi}^{\theta - 1}I_{0<yi<1}$$
+
+$$\begin{aligned}
+By~Factorization \\
+h(y) & = \Pi_{i=1}^n {yi}^{- 1}I_{0<yi<1} \\
+k(g(y)|\theta) & = \theta^n\Pi_{i=1}^n {yi}^{\theta} \\
+& = \theta^nexp(\theta log(\sum^{n}_{i=1}yi)\\
+T & = log(\sum^{n}_{i=1}yi), is ~ the~ sufficient~ statistics \\
+So~we~can~say~that~T & = {y}^{1 \over n} ~~is~also~the~ sufficient~ statistics~which~ follows ~Geometric ~mean.
+\end{aligned}$$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

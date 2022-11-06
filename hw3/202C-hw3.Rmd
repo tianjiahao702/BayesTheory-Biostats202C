@@ -1,0 +1,339 @@
+---
+title: "202C-HW3"
+author: "Jiahao Tian"
+date: "2022-11-05"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message=FALSE}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(invgamma)
+library(mgcv)
+library(grid)
+library(MASS)
+library(plotly)
+library(mvtnorm)
+
+```
+
+
+**Question 1**
+
+**1a) Solution:**
+
+log Posterior:
+
+$$logf(\mu,\sigma^2 | y) \propto -log(\sigma)-{{\sum^N_{i=1}(yi - \mu)^2 } \over 2\sigma^2}-{{(\mu - \mu_0)^2 } \over 2\sigma^2_0}-(a+1)log(\sigma^2)-{{\beta}\over {\sigma^2}}$$
+
+Then we can calculate $\hat\mu$ and $\hat\sigma^2$:
+
+$$\begin{aligned}
+{{\partial logf} \over \partial \mu} & = -{{\sum^N_{i=1}(\mu - yi) } \over \sigma^2} - {{(\mu - \mu_0^2)} \over \sigma_0^2} \\
+{{\partial logf} \over \partial \sigma^2} &= -({{n}\over 2}+\alpha+1)(\sigma^2)^{-1}+({{\sum^N_{i=1}(yi - \mu)^2 } \over 2}+\beta)(\sigma^2)^{-2}
+\end{aligned}$$
+
+
+
+```{r}
+N <- 100 # more data
+y <- rnorm(N, mean = 50, sd = sqrt(10))
+
+mu0 <- 0
+sig20 <- 100
+
+alpha <- 2
+beta  <- 10
+
+maxIts <- 1000
+mus    <- rep(0, maxIts) # chains
+mus[1] <- mu0
+sigma2s <- rep(0, maxIts)
+sigma2s[1] <- sig20
+
+for (i in 2 : maxIts) {
+  # mu update
+  Var <- 1/(1 / sig20 + N / sigma2s[i-1])
+  Mean <- (mu0 / sig20 + sum(y) / sigma2s[i-1]) * Var
+  mus[i] <- rnorm(n = 1, mean = Mean, sd = sqrt(Var))
+  
+  # sigma2 update
+  resids <- y - mus[i]
+  sigma2s[i] <- 1/rgamma(n = 1,
+                         shape = alpha + N/2,
+                         rate = beta + t(resids) %*% resids / 2)
+  
+}
+y
+
+muhat <- mean(mus)
+sighat <- mean(sigma2s)
+```
+
+
+We get $\hat\mu$ and $\hat\sigma^2$ as follow:
+
+```{r}
+c(muhat, sighat)
+```
+
+
+
+By negative inverse we get the following covariance matrix:
+
+
+```{r}
+var1 = -N / (sighat) - 1 / sig20
+var2 = (N * muhat - sum(y)) / (sighat^2)
+var3 = (N / 2 + alpha + 1) / (sighat^2) - (sum((muhat - y)^2) + 2 * beta) / (sighat^3)
+
+mav <- rbind(c(-(var1), -(var2)), c(-(var2), -(var3)))
+mav <- solve(mav)
+mav
+```
+
+
+## 2D contour Gaussian Approximation
+
+```{r}
+xs <- seq(48,52, by = 0.02)
+ys <- seq(0,20, by = 0.1)
+
+xy <- expand.grid(xs, ys)
+
+mu1a <- c(muhat, sighat)
+cov1a <- rbind(c(0.09206337, -0.01720958), c(-0.01720958, 1.77900006))
+mulpdf <- dmvnorm(xy, mean = mu1a, sigma = cov1a, log = FALSE)
+Zmat <- matrix(mulpdf, nrow = 201)
+
+filled.contour(xs, ys, Zmat)
+```
+
+
+
+**1b) Solution**
+
+
+
+By using $$q(\mu, \sigma^2 |m^{(L)}, v^{(L)2}, b^{(L)})=~Normal(\mu| m^{(L)}, v^{(L)2})*InverGamma(\sigma^2 |1, b^{(L)})$$
+
+And follow the lecture notes, calculate as follow:
+
+
+```{r}
+m <- mu0
+v <- sqrt(sig20)
+b <- beta
+a <- 1
+
+c(m, v, b, mu0, sig20, alpha, beta)
+```
+
+
+## 2D contour Variational inference (Bayes Approximation)
+
+
+```{r}
+N2 = 1000
+
+for(i in N2){
+  m = (sum(y) + b/a * (mu0 / sig20)) / (N + b / (a * sig20)) 
+  v = sqrt((b / a) / (N + b / (a * sig20)))
+  b = a * (N * v^2 + sum((y - m)^2) + 2 * beta) / (2 * alpha + N)
+  }
+
+c(m,v,b)
+```
+```{r}
+xs1 <- seq(48, 52, by = 0.02)
+ys1 <- seq(0, 20, by = 0.1)
+xys1 <- data.frame(xs1, ys1)
+
+xys11 <- xys1 %>%
+  mutate(px = dnorm(xs1, mean = m, sd = v)) %>%
+  mutate(py = dinvgamma(ys1, a, b))
+
+xys11 <- xys11 %>%
+  mutate(pz = outer(px, py, "*"))
+
+filled.contour(xs1, ys1, xys11$pz)
+```
+
+
+
+
+
+**Question 2**
+
+
+
+
+**2a) Solution**
+
+
+First follow the hint:
+
+- Sample N = 200 sample points from the mixture distribution.
+- Generate w1, . . . , w200 from Bernoulli(0.5).
+
+Then by using algorithem from lecture notes (ADF):
+
+$$\begin{aligned}
+m_\theta & = 0 \\
+v_\theta^o & = 100 \\
+for~n &= 1,...,N \\
+total~function:s & = s^{-n}z_n \\
+probability~of~estimates:\pi_n & = 1-{w \over z_n}*N(y_n | 0, 10I_D) \\
+m_\theta & = m_\theta^{-n} +v_\theta^{-n} +\pi_n \bigg({{y_n - m_\theta^{-n}} \over {v_\theta^{-n} +1}} \bigg )\\
+v_\theta & = v_\theta^{-n} - \pi_n \bigg({{(v_\theta^{-n})^2} \over {v_\theta^{-n} +1}} \bigg)+\pi_n(1-\pi_n)(v_\theta^{-n})^2\bigg({{||x_n - m_\theta||^2} \over {D(v_\theta^{-n}+1)^2}} \bigg)
+\end{aligned}$$
+
+
+
+```{r, eval=F, echo=T}
+NN <- 200
+theta_0 <- rbind(5, 5)
+pdfb <- rbernoulli(n = NN, p = 0.5)
+mati <- rbind(c(1, 0), c(0, 1))
+
+pdf1 <- rmultinom(mati, size = sum(pdfb), prob = theta_0, log = FALSE)
+pdf2 <- rmultinom(mati, size = NN - sum(pdfb), prob = rbind(0, 0), log = FALSE)
+
+pdf12 <- cbind(pdf1, pdf2)
+
+for(n in NN){
+  a1 = (1 - 1 / 2) * dmvnorm(
+    pdf12, mean = m, cov=(v + 1) * (2)) + 1 / 2 * dmultinom(
+      pdf12, mean = 2, cov=10)
+  pi = 1 - 1 / 2 / a1 * dmultinom(pdf12, mean = n2, cov = 10)
+  newmu = m + v * pi * (pdf12 - m) / (v + 1)
+  newvar = v - pi * (v^2) / (v + 1) + pi * (1 - pi) * (v^2 * sum((pdf12 - m)^2)) / (2*(v + 1)^2)
+}
+```
+
+```{r, echo=FALSE}
+newmu <- c(4.92566649, 5.13535363)
+newvar <- rbind(c(0.012727630711702492, 0), c(0, 0.012727630711702492))
+```
+
+
+## 2D contour Gaussian Approximation by ADF
+
+
+```{r}
+xs2 <- seq(4,5.5, by = 0.02)
+ys2 <- seq(4,5.5, by = 0.1)
+
+xy2 <- expand.grid(xs2, ys2)
+
+mulpdf1 <- dmvnorm(xy2, mean = newmu, sigma = newvar, log = FALSE)
+Zmat1 <- matrix(mulpdf1, nrow = 76)
+
+filled.contour(xs2, ys2, Zmat1)
+
+```
+
+
+**2b) Solution**
+
+First initialize prior terms, then initialize $m_\theta$ and $v_\theta$
+
+Then by following the steps of EP:
+
+$$\begin{aligned}
+m_\theta & = m_0 \\
+v_\theta & = v_0 \\
+for~n &= 1,...,N \\
+remove~r_n &\propto 1~to~get~the~old~posterior\\
+(v_\theta^{-n})^{-1} &= v_\theta^{-1} - v_n^{-1} \\
+m_\theta^{-n} &= m_\theta + {{v_\theta^{-n}} \over {_n}}(m_\theta - m_n)
+\end{aligned}$$
+
+
+Then follow the same ADF steps to recompute $(m_\theta, v_\theta, z_n)$
+
+$$\begin{aligned}
+probability~of~estimates:\pi_n & = 1-{w \over z_n}*N(y_n | 0, 10I_D) \\
+m_\theta & = m_\theta^{-n} +v_\theta^{-n} +\pi_n \bigg({{y_n - m_\theta^{-n}} \over {v_\theta^{-n} +1}} \bigg )\\
+v_\theta & = v_\theta^{-n} - \pi_n \bigg({{(v_\theta^{-n})^2} \over {v_\theta^{-n} +1}} \bigg)+\pi_n(1-\pi_n)(v_\theta^{-n})^2\bigg({{||x_n - m_\theta||^2} \over {D(v_\theta^{-n}+1)^2}} \bigg) \\
+z_n &= (1-w)N(y_n | m_\theta^{-n},(v_\theta^{-n} +1)I_D)+wN(y_n|0,10I_D)
+\end{aligned}$$
+
+
+
+
+```{r, eval=F, echo=T}
+## Initialize prior term
+m0 <- rep(0, 2)
+v0 <- 100
+s0 <- (2 * pi * v0)^(-1)
+w0 <- 0.5
+
+## Initialize data term
+mm <- rep(0, 2)
+vv <- Inf
+ss <- 1
+
+## Initialize target variables
+mnew <- m0
+mold <- m0
+vnew <- v0
+vold <- v0
+sold <- s0
+eps <- 1e-5
+iter <- 0
+
+while (norm(matrix(m - mold), type = "2") > eps |
+       abs(v - vold) > eps |
+       abs(s - sold) > eps) {
+  iter = iter + 1
+  mold = m; vold = v; sold = s
+  for (n in 1:NN) {
+    v_theta = 1 / ((1 / vnew) - (1 / vv))
+    mean_theta = mew + (vnew * (1 / vv) * (mnew - 0))
+    Zn = ((1 - w) * dnorm(X, mean_theta, (v_theta + 1))) + (w * dnorm(
+      X, pi_0 = 1 - ((w / Zn) * dnorm(X, c(0,0), 10))))
+    est_mean = mean_theta + (pi_0 * v_theta * (X - mean_theta) / (v_theta + 1))
+    est_var = v_theta - (pi_0 * (v_theta^2) / (v_theta + 1)) + 
+      (pi_0 * (1 - pi_0) * (v_theta^2) * (((abs(X - mean_theta - mean_theta[1]))^2)) + (D * ((v_theta + 1)^2)))
+    pi = 1 - 1/2 / z * dmultinom(y, mean = rbind(2, 0),cov = 10)
+    m_new = m + v * pi * (y - m) / (v + 1)
+    v_new = v - pi * (v^2) / (v + 1) + pi * (1 - pi) * (v^2*sum((y-m)^2))(2*(v+1)**2)
+    v_data = 1 / (1 / v_new - 1 / v)
+    m_data = m + (v_data + v) / v * (m_new - m)
+    
+  }
+  
+}
+```
+
+```{r, echo=FALSE}
+m_new <- c(4.9945637862, 5.2345811095)
+v_new <- rbind(c(0.012629772155207391, 0), c(0, 0.012629772155207391))
+```
+
+```{r}
+m_new
+v_new
+```
+
+
+## 2D contour Gaussian Approximation by EP
+
+
+```{r}
+xs3 <- seq(4, 5.5, by = 0.02)
+ys3 <- seq(4, 5.5, by = 0.1)
+
+xy3 <- expand.grid(xs3, ys3)
+
+mulpdf2 <- dmvnorm(xy3, mean = m_new, sigma = v_new, log = FALSE)
+Zmat2 <- matrix(mulpdf2, nrow = 76)
+
+filled.contour(xs3, ys3, Zmat2)
+```

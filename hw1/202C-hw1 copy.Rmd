@@ -1,0 +1,194 @@
+---
+title: "Biostats-202C-hw1"
+author: "Jiahao Tian"
+date: "2022-10-06"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyr)
+library(ggplot2)
+library()
+```
+
+**Question 1**
+
+
+**a)**
+
+$$ y \sim pois(\lambda), ~~~\lambda \sim gamma(a, b) $$
+$$ f(y|\lambda) = {(\lambda^y e^{-\lambda})\over y!} ~~~ L(y|\lambda) = {{\lambda^{\sum(yi)} e^{-ny}} \over \Pi y!} $$
+$$ p(\lambda) = {b^a \over \Gamma(a)} \lambda^{a-1} e^{-\lambda{b}} $$
+$$ p(\lambda | y) \propto \lambda^{\sum(yi)+a-1} e^{-\lambda(b+n)}, \lambda >0 $$
+$$ posterior~ follows~ gamma~ distribution~ \sim Gamma(\sum(yi)+a, b+n) $$
+
+**b)**
+
+$$\begin{aligned}
+f(y) & = \int_{0}^{\infty}{b^a \over \Gamma(a)}{\lambda^{a-1}}{e^{-\lambda b}}{{\lambda^ye^{-\lambda}}\over y!}d\lambda \\
+& = {b^a \over {\Gamma(a)y!}}\int_{0}^{\infty}{\lambda^{a-1}}{{e^{-\lambda b}}}{\lambda^{y}}{e^{-\lambda}}d\lambda\\
+& = {b^a \over {\Gamma(a)y!}}{\Gamma(y+a) \over (b+a)^{y+a}} \int_{0}^{\infty}{(b+a)^{y+a} \over \Gamma(y+a)}{\lambda^{y+a-1}}{e^{-\lambda(b+1)}}d\lambda \\
+& = {b^a \over {\Gamma(a)y!}}{\Gamma(y+a) \over (b+1)^{y+a}}
+\end{aligned}$$
+
+
+**c)**
+
+From part b,
+
+$$ \begin{aligned}
+f(y|a,b) & = {b^a \over \Gamma(a)y!}{{\Gamma(y+a)} \over (b+1)^{y+a}} \\
+& = {(y+a-1)! \over (a-1)!y!}{b^a \over (b+1)^{y+a}}\\
+& = {y+a-1 \choose y}b^a(b+1)^{-y-a}
+\end{aligned}$$
+
+$$ Which ~~ f(y|a,b) \sim NB(a,b)$$ 
+
+**d)**
+
+```{r}
+y <- 1
+data <- dpois(y, 1)
+prior <- dgamma(y, 1, 1)
+posterior <- dgamma(y, 2, 2)
+
+plot(y, prior, type = "l", col = "red")
+lines(y, posterior, type = "l", col = "green")
+lines(y, data , type = "l", col = "blue")
+```
+
+
+**Question 2**
+
+
+**a)**
+
+
+$$L(y|\lambda) = {{\lambda^{\sum(yi)} e^{-ny}} \over \Pi y!} ~~~ p(\lambda) = {b^a \over \Gamma(a)} \lambda^{a-1} e^{-\lambda{b}} $$
+$$ p(\lambda | y) \propto \lambda^{\sum(yi)+a-1} e^{-\lambda(b+n)}, \lambda >0 $$
+
+$$ posterior~ follows~ gamma~ distribution~ \sim Gamma(\sum(yi)+a, b+n) $$
+
+**Question 3**
+
+
+**a)**
+
+$$ \begin{aligned}
+mean; ~~ E(y|\tau) & = \int_{0}^{\infty}y{({2 \over {\pi\tau}})^{1/2}}e^{-(y)^2 \over 2\tau}dy \\
+& = ({2 \over \pi\tau})^{1/2}[-\tau e^{-{{y}^2}\over2\tau}|_{0}^{\infty}] \\
+& = ({2\tau \over \pi})^{1/2}
+\end{aligned}$$
+$$ variance; ~~ \tau(1-{2 \over \pi})~~~~~~mode; ~~ 0~~~~~median; ~~ \tau\sqrt{2}{erf}^{-1}(1/2)$$
+**b)**
+
+
+$$ indicator,~~~~I = \{^{1~~~~0~<~yi}_{0~~~~otherwise}$$
+$$\begin{aligned} Lf(y|\tau) & = {({2 \over {\pi\tau}})^{n/2}}e^{-{(\sum yi)^2 \over 2\tau}}I \\
+logLf(y|\tau) & = {n \over 2}log{2 \over {\pi\tau}}-{{\sum yi}^2 \over {2\tau}}I \\
+\triangledown logLf(y|\tau) & = -{n\over {2\tau^3}}+{{\sum yi^2}\over{2\tau^2}}~,set~equal~to~0\\
+we~get~,\hat{\tau} & = {n \over {{\sum yi}}^2}\\
+T & = {n \over {{\sum yi}}^2}~,is ~ the~ sufficient~ statistics ~for ~\tau 
+\end{aligned}$$
+
+
+
+**c)**
+
+
+$$ indicator,~~~~I = \{^{1~~~~0~<~yi}_{0~~~~otherwise}$$
+
+
+$$Lf(y|\tau) = {({2 \over {\pi\tau}})^{n/2}}e^{-{(\sum yi)^2 \over 2\tau}}I $$
+$$f(\tau) = {{({b \over 2})^{a \over 2}} \over {\Gamma({a \over 2})}}\tau^{-{a \over 2}-1}e^{-{b \over {2\tau}}}  $$
+$$ posterior;~~ f(\tau|y) \propto ({2 \over {\pi \tau^{a+2}}})^{n \over 2} e^{-{{({\sum yi}^2}+b}) \over 2\tau},~yi>0$$
+$$posterior ~follows~ halfnormal ~distribution$$
+
+
+
+**Question 4**
+
+
+**a)**
+
+When data is non-negative, also, collected at the individual level (binary response) or group level (proportion) might use
+half-normal distribution. When data shows binary response and non-negative values will lead to use half-normal distribution.
+
+
+**b)**
+
+Example: Half-normal can be use to model distance at which wildlife observe on a boat detect an animal when surveying, such 
+as whales in the ocean.
+
+**c)**
+
+The competitor distribution I might use is "Poisson distribution".
+
+
+
+**Question 5**
+
+
+**a)**
+
+$$ f(y|\sigma) = {({2 \over {\pi\sigma}})^{1/2}}e^{-{(y)^2 \over 2\sigma}},~y>0  $$
+
+**b)**
+
+Yes, because half-normal distribution's variance here is unknown and inverse gamma can use as the conjugate prior of the 
+variance.
+
+
+**c)**
+
+Yes, I thinks that it can be inverse gamma.
+
+
+
+**Question 6**
+
+
+**a)**
+
+$$ f(y|\theta) \sim beta(\theta,1) $$
+$$ so~the~normalizing~constant~is;~ {{\Gamma(\theta +1)} \over \Gamma(\theta) \Gamma(1)}$$
+
+
+**b)**
+
+
+
+$$ Lf(y|\theta) = \bigg({{\Gamma(\theta +1)} \over \Gamma(\theta) \Gamma(1)}\bigg)^n\Pi_{i=1}^n {yi}^{\theta - 1}I_{0<yi<1}$$
+
+$$\begin{aligned}
+By~Factorization \\
+h(y) & = \Pi_{i=1}^n {yi}^{- 1} \\
+k(g(y)|\theta) & = \Pi_{i=1}^n {yi}^{\theta}I_{0<yi<1} \\
+T & = max \{yi\}, is ~ the~ sufficient~ statistics ~for ~\theta
+\end{aligned}$$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
